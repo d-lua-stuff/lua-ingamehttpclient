@@ -4,6 +4,10 @@ A tiny HTTP client library that could be used as a part of the any game that sup
 
 If you do not need a minimal API surface and the number of files is not an issue, then another library such as [luasocket](https://github.com/diegonehab/luasocket) would most likely be a better choice.
 
+Comments and suggestions about C++ style, Lua API and other topics are welcome! This script's author's brain was rotted by years of C#...
+
+See [test.lua](./test.lua) for some examples.
+
 # Building
 
 ## On Windows

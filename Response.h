@@ -6,6 +6,7 @@
 class Response
 {
 public:
+#if defined(_DEBUG)
 	Response()
 	{
 		DEBUG_PRINT("ingamehttpclient: in Response()");
@@ -15,6 +16,7 @@ public:
 	{
 		DEBUG_PRINT("ingamehttpclient: in ~Response()");
 	}
+#endif
 
 	std::atomic<bool> isPending;
 	std::shared_ptr<Poco::Net::HTTPResponse::HTTPStatus> status;

@@ -5,21 +5,38 @@ local function printResponse (response)
 	print("content: ", response:getContent())
 end
 
-local ok, message = pcall(function ()
-	http = require "ingamehttpclient"
+local function doRequest (requestData)
+	print("request begins...")
 
-	local response = http.request("https://jsonplaceholder.typicode.com/posts/1")
-	while response:isPending() do
-		print("waiting...")
+	local response = http.request(requestData)
+
+	while response:isPending() do -- a real Lua script could call coroutine.yield() here
+		print("\nwaiting...\n")
 		printResponse(response)
 		os.execute("timeout 1 > nul")
 	end
 
-	print("done!")
+	print("\ndone!\n")
 	printResponse(response)
+end
+
+local ok, message = pcall(function ()
+	http = require "ingamehttpclient"
+
+	doRequest {
+		url = "https://reqres.in/api/users/2"
+	}
+
+	doRequest {
+		url = "https://reqres.in/api/users",
+		method = "POST",
+		body = '{ "name": "John Doe", "job": "Lua scripter" }',
+		headers = {
+			["Content-Type"] = "application/json"
+		}
+	}
 end)
 
 if not ok then
 	print("error: " .. message)
 end
-
