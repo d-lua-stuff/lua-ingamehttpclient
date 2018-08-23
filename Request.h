@@ -9,12 +9,12 @@ public:
 #if defined(_DEBUG)
 	Request()
 	{
-		DEBUG_PRINT("ingamehttpclient: in Request()");
+		DEBUG_PRINT("in Request()");
 	}
 
 	~Request()
 	{
-		DEBUG_PRINT("ingamehttpclient: in ~Request()");
+		DEBUG_PRINT("in ~Request()");
 	}
 #endif
 
@@ -25,5 +25,3 @@ public:
 
 	ResponseSharedPtr start() const;
 };
-
-void initRequest();

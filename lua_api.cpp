@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "debug.h"
+#include "Context.h"
 #include "Request.h"
 
 // some references
@@ -7,11 +7,70 @@
 // https://stackoverflow.com/questions/3481856/sending-variable-pointers-back-and-forth-between-c-and-lua
 // https://gist.github.com/kizzx2/5221139
 
-static const char *metatableName = "ingamehttpclient_Response";
+static const char *contextMetatableName = "ingamehttpclient_Context";
+static const char *responseMetatableName = "ingamehttpclient_Response";
+
+static const char *contextKeyInRegistry = "ingamehttpclient_Context_reg";
+
+static int l_newindex_forbidden(lua_State *L)
+{
+	// without this, scripters could overwrite __gc and cause memory leaks
+
+	luaL_error(L, "modification of this table is not allowed");
+	return 0;
+}
+
+static ContextSharedPtr *l_checkContext(lua_State *L, int n)
+{
+	ContextSharedPtr *ptrContext = static_cast<ContextSharedPtr*>(luaL_checkudata(L, n, contextMetatableName));
+
+	if (ptrContext->get() == nullptr)
+		luaL_error(L, "attempting to access a disposed context");
+
+	return ptrContext;
+}
+
+static ContextSharedPtr *l_getContext(lua_State *L)
+{
+	ContextSharedPtr *ptrContext;
+
+	lua_pushstring(L, contextKeyInRegistry);
+	const int contextLuaType = lua_rawget(L, LUA_REGISTRYINDEX);
+
+	if (contextLuaType == LUA_TNIL)
+	{
+		lua_pop(L, 1);
+
+		void* buffer = lua_newuserdata(L, sizeof(ContextSharedPtr));
+		ptrContext = new(buffer) ContextSharedPtr(new Context());
+		luaL_setmetatable(L, contextMetatableName);
+
+		lua_pushstring(L, contextKeyInRegistry);
+		lua_insert(L, -2);
+		lua_rawset(L, LUA_REGISTRYINDEX);
+	}
+	else
+	{
+		ptrContext = l_checkContext(L, -1);
+	}
+
+	lua_pop(L, 1);
+	return ptrContext;
+}
+
+static int l_context_gc(lua_State *L)
+{
+	DEBUG_PRINT("in l_context_gc()");
+
+	ContextSharedPtr *ptrContext = l_checkContext(L, 1);
+	ptrContext->reset();
+
+	return 0;
+}
 
 static ResponseSharedPtr *l_checkResponse(lua_State *L, int n)
 {
-	ResponseSharedPtr *ptrResponse = static_cast<ResponseSharedPtr*>(luaL_checkudata(L, n, metatableName));
+	ResponseSharedPtr *ptrResponse = static_cast<ResponseSharedPtr*>(luaL_checkudata(L, n, responseMetatableName));
 
 	if (ptrResponse->get() == nullptr)
 		luaL_error(L, "attempting to access a disposed response");
@@ -21,7 +80,7 @@ static ResponseSharedPtr *l_checkResponse(lua_State *L, int n)
 
 static int l_response_gc(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_response_gc()");
+	DEBUG_PRINT("in l_response_gc()");
 
 	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
 	ptrResponse->reset();
@@ -29,17 +88,9 @@ static int l_response_gc(lua_State *L)
 	return 0;
 }
 
-static int l_response_newindex(lua_State *L)
-{
-	// without this, scripters could overwrite __gc and cause memory leaks
-
-	luaL_error(L, "modification of this table is not allowed");
-	return 0;
-}
-
 static int l_response_tostring(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_response_tostring()");
+	DEBUG_PRINT("in l_response_tostring()");
 
 	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
 
@@ -53,7 +104,7 @@ static int l_response_tostring(lua_State *L)
 
 static int l_response_isPending(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_response_isPending()");
+	DEBUG_PRINT("in l_response_isPending()");
 
 	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
 
@@ -63,7 +114,7 @@ static int l_response_isPending(lua_State *L)
 
 static int l_response_getStatus(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_response_getStatus()");
+	DEBUG_PRINT("in l_response_getStatus()");
 
 	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
 	auto& ptrStatus = (*ptrResponse)->status;
@@ -78,7 +129,7 @@ static int l_response_getStatus(lua_State *L)
 
 static int l_response_getReason(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_response_getReason()");
+	DEBUG_PRINT("in l_response_getReason()");
 
 	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
 	auto& ptrReason = (*ptrResponse)->reason;
@@ -93,7 +144,7 @@ static int l_response_getReason(lua_State *L)
 
 static int l_response_getContent(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_response_getContent()");
+	DEBUG_PRINT("in l_response_getContent()");
 
 	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
 	auto& ptrContent = (*ptrResponse)->content;
@@ -108,7 +159,7 @@ static int l_response_getContent(lua_State *L)
 
 static int l_request(lua_State *L)
 {
-	DEBUG_PRINT("ingamehttpclient: in l_request()");
+	DEBUG_PRINT("in l_request()");
 
 	luaL_checktype(L, 1, LUA_TTABLE);
 
@@ -210,6 +261,10 @@ static int l_request(lua_State *L)
 			lua_pop(L, 1);
 		}
 
+		// get context
+
+		ContextSharedPtr *ptrContext = l_getContext(L); // unused for now
+
 		// start the request and get the response object
 
 		void* buffer = lua_newuserdata(L, sizeof(ResponseSharedPtr));
@@ -224,11 +279,16 @@ static int l_request(lua_State *L)
 		luaL_error(L, "unknown error");
 	}
 
-	luaL_setmetatable(L, metatableName);
+	luaL_setmetatable(L, responseMetatableName);
 	return 1;
 }
 
-static const struct luaL_Reg ingamehttpclient_meta[] = {
+static const struct luaL_Reg ingamehttpclient_context_meta[] = {
+	{ "__gc", l_context_gc },
+	{ NULL, NULL }
+};
+
+static const struct luaL_Reg ingamehttpclient_response_meta[] = {
 	{ "__gc", l_response_gc },
 	{ "__tostring", l_response_tostring },
 	{ "isPending", l_response_isPending },
@@ -246,16 +306,20 @@ static const struct luaL_Reg ingamehttpclient_lib[] = {
 extern "C" __declspec(dllexport)
 int luaopen_ingamehttpclient(lua_State *L)
 {
-	// todo: instead of initializing here, store a bool in the registry
-	initRequest();
-
-	luaL_newmetatable(L, metatableName);
-	luaL_setfuncs(L, ingamehttpclient_meta, 0);
+	luaL_newmetatable(L, contextMetatableName);
+	luaL_setfuncs(L, ingamehttpclient_context_meta, 0);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -1, "__index");
-	lua_pushcfunction(L, l_response_newindex);
+	lua_pushcfunction(L, l_newindex_forbidden);
 	lua_setfield(L, -2, "__newindex");
 	
+	luaL_newmetatable(L, responseMetatableName);
+	luaL_setfuncs(L, ingamehttpclient_response_meta, 0);
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -1, "__index");
+	lua_pushcfunction(L, l_newindex_forbidden);
+	lua_setfield(L, -2, "__newindex");
+
 	// luaL_newlib(L, ingamehttpclient_lib); // do not use - luaL_checkversion(L) will complain about multiple Lua VMs in <5.3.5, since games' Lua is often linked statically, and this library's Lua is too
 	luaL_newlibtable(L, ingamehttpclient_lib);
 	luaL_setfuncs(L, ingamehttpclient_lib, 0);

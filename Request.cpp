@@ -11,11 +11,6 @@ using Poco::Net::HTTPMessage;
 using Poco::Net::HTTPRequest;
 using Poco::Net::HTTPResponse;
 
-void initRequest()
-{
-	Poco::Net::initializeSSL();
-}
-
 static void performRequest(
 	std::shared_ptr<Response> ptrResponse,
 	const std::string url,
@@ -24,7 +19,7 @@ static void performRequest(
 	const std::map<std::string, std::string> headers
 )
 {
-	DEBUG_PRINT("ingamehttpclient: request thread started");
+	DEBUG_PRINT("request thread started");
 
 	try
 	{
@@ -59,7 +54,7 @@ static void performRequest(
 			request.set(kv.first, kv.second);
 		}
 
-		DEBUG_PRINT("ingamehttpclient: sending the request");
+		DEBUG_PRINT("sending the request");
 
 		std::ostream& requestStream = ptrSession->sendRequest(request);
 
@@ -68,7 +63,7 @@ static void performRequest(
 			requestStream << body;
 		}
 
-		DEBUG_PRINT("ingamehttpclient: receiving the response");
+		DEBUG_PRINT("receiving the response");
 
 		std::istream& responseStream = ptrSession->receiveResponse(response);
 
@@ -94,7 +89,7 @@ static void performRequest(
 
 	ptrResponse->isPending = false;
 
-	DEBUG_PRINT("ingamehttpclient: request thread finished");
+	DEBUG_PRINT("request thread finished");
 }
 
 std::shared_ptr<Response> Request::start() const

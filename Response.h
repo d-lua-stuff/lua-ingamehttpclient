@@ -9,12 +9,12 @@ public:
 #if defined(_DEBUG)
 	Response()
 	{
-		DEBUG_PRINT("ingamehttpclient: in Response()");
+		DEBUG_PRINT("in Response()");
 	}
 
 	~Response()
 	{
-		DEBUG_PRINT("ingamehttpclient: in ~Response()");
+		DEBUG_PRINT("in ~Response()");
 	}
 #endif
 
