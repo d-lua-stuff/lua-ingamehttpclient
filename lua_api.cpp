@@ -20,19 +20,19 @@ static int l_newindex_forbidden(lua_State *L)
 	return 0;
 }
 
-static ContextSharedPtr *l_checkContext(lua_State *L, int n)
+static ContextSharedPtr l_checkContext(lua_State *L, int n)
 {
-	ContextSharedPtr *ptrContext = static_cast<ContextSharedPtr*>(luaL_checkudata(L, n, contextMetatableName));
+	ContextSharedPtr ptrContext = *static_cast<ContextSharedPtr*>(luaL_checkudata(L, n, contextMetatableName));
 
-	if (ptrContext->get() == nullptr)
+	if (ptrContext.get() == nullptr)
 		luaL_error(L, "attempting to access a disposed context");
 
 	return ptrContext;
 }
 
-static ContextSharedPtr *l_getContext(lua_State *L)
+static ContextSharedPtr l_getContext(lua_State *L)
 {
-	ContextSharedPtr *ptrContext;
+	ContextSharedPtr ptrContext;
 
 	lua_pushstring(L, contextKeyInRegistry);
 	const int contextLuaType = lua_rawget(L, LUA_REGISTRYINDEX);
@@ -41,8 +41,9 @@ static ContextSharedPtr *l_getContext(lua_State *L)
 	{
 		lua_pop(L, 1);
 
-		void* buffer = lua_newuserdata(L, sizeof(ContextSharedPtr));
-		ptrContext = new(buffer) ContextSharedPtr(new Context());
+		void *buffer = lua_newuserdata(L, sizeof(ContextSharedPtr));
+		new(buffer) ContextSharedPtr(new Context());
+
 		luaL_setmetatable(L, contextMetatableName);
 
 		lua_pushstring(L, contextKeyInRegistry);
@@ -62,17 +63,17 @@ static int l_context_gc(lua_State *L)
 {
 	DEBUG_PRINT("in l_context_gc()");
 
-	ContextSharedPtr *ptrContext = l_checkContext(L, 1);
-	ptrContext->reset();
+	ContextSharedPtr ptrContext = l_checkContext(L, 1);
+	ptrContext.reset();
 
 	return 0;
 }
 
-static ResponseSharedPtr *l_checkResponse(lua_State *L, int n)
+static ResponseSharedPtr l_checkResponse(lua_State *L, int n)
 {
-	ResponseSharedPtr *ptrResponse = static_cast<ResponseSharedPtr*>(luaL_checkudata(L, n, responseMetatableName));
+	ResponseSharedPtr ptrResponse = *static_cast<ResponseSharedPtr*>(luaL_checkudata(L, n, responseMetatableName));
 
-	if (ptrResponse->get() == nullptr)
+	if (ptrResponse.get() == nullptr)
 		luaL_error(L, "attempting to access a disposed response");
 
 	return ptrResponse;
@@ -82,8 +83,8 @@ static int l_response_gc(lua_State *L)
 {
 	DEBUG_PRINT("in l_response_gc()");
 
-	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
-	ptrResponse->reset();
+	ResponseSharedPtr ptrResponse = l_checkResponse(L, 1);
+	ptrResponse.reset();
 	
 	return 0;
 }
@@ -92,9 +93,9 @@ static int l_response_tostring(lua_State *L)
 {
 	DEBUG_PRINT("in l_response_tostring()");
 
-	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
+	const ResponseSharedPtr ptrResponse = l_checkResponse(L, 1);
 
-	if ((*ptrResponse)->isPending)
+	if (ptrResponse->isPending)
 		lua_pushstring(L, "response (pending)");
 	else
 		lua_pushstring(L, "response (ready)");
@@ -106,9 +107,9 @@ static int l_response_isPending(lua_State *L)
 {
 	DEBUG_PRINT("in l_response_isPending()");
 
-	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
+	const ResponseSharedPtr ptrResponse = l_checkResponse(L, 1);
 
-	lua_pushboolean(L, (*ptrResponse)->isPending);
+	lua_pushboolean(L, ptrResponse->isPending);
 	return 1;
 }
 
@@ -116,10 +117,10 @@ static int l_response_getStatus(lua_State *L)
 {
 	DEBUG_PRINT("in l_response_getStatus()");
 
-	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
-	auto& ptrStatus = (*ptrResponse)->status;
+	const ResponseSharedPtr ptrResponse = l_checkResponse(L, 1);
+	const auto& ptrStatus = ptrResponse->status;
 
-	if ((*ptrResponse)->isPending || ptrStatus.get() == nullptr)
+	if (ptrResponse->isPending || ptrStatus.get() == nullptr)
 		lua_pushnil(L);
 	else
 		lua_pushinteger(L, *ptrStatus);
@@ -131,10 +132,10 @@ static int l_response_getReason(lua_State *L)
 {
 	DEBUG_PRINT("in l_response_getReason()");
 
-	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
-	auto& ptrReason = (*ptrResponse)->reason;
+	const ResponseSharedPtr ptrResponse = l_checkResponse(L, 1);
+	const auto& ptrReason = ptrResponse->reason;
 
-	if ((*ptrResponse)->isPending || ptrReason.get() == nullptr)
+	if (ptrResponse->isPending || ptrReason.get() == nullptr)
 		lua_pushnil(L);
 	else
 		lua_pushstring(L, ptrReason->c_str());
@@ -146,10 +147,10 @@ static int l_response_getContent(lua_State *L)
 {
 	DEBUG_PRINT("in l_response_getContent()");
 
-	ResponseSharedPtr *ptrResponse = l_checkResponse(L, 1);
-	auto& ptrContent = (*ptrResponse)->content;
+	const ResponseSharedPtr ptrResponse = l_checkResponse(L, 1);
+	const auto& ptrContent = ptrResponse->content;
 
-	if ((*ptrResponse)->isPending || ptrContent.get() == nullptr)
+	if (ptrResponse->isPending || ptrContent.get() == nullptr)
 		lua_pushnil(L);
 	else
 		lua_pushstring(L, ptrContent->c_str());
@@ -263,12 +264,12 @@ static int l_request(lua_State *L)
 
 		// get context
 
-		ContextSharedPtr *ptrContext = l_getContext(L); // unused for now
+		ContextSharedPtr ptrContext = l_getContext(L); // unused for now
 
 		// start the request and get the response object
 
-		void* buffer = lua_newuserdata(L, sizeof(ResponseSharedPtr));
-		ResponseSharedPtr *ptrResponse = new(buffer) ResponseSharedPtr(request.start());
+		void *buffer = lua_newuserdata(L, sizeof(ResponseSharedPtr));
+		new(buffer) ResponseSharedPtr(request.start());
 	}
 	catch (std::exception& e)
 	{
@@ -320,7 +321,7 @@ int luaopen_ingamehttpclient(lua_State *L)
 	lua_pushcfunction(L, l_newindex_forbidden);
 	lua_setfield(L, -2, "__newindex");
 
-	// luaL_newlib(L, ingamehttpclient_lib); // do not use - luaL_checkversion(L) will complain about multiple Lua VMs in <5.3.5, since games' Lua is often linked statically, and this library's Lua is too
+	// luaL_newlib(L, ingamehttpclient_lib); // do not use: luaL_checkversion(L) will complain about multiple Lua VMs in <5.3.5, since games' Lua is often linked statically, and this library's Lua is too
 	luaL_newlibtable(L, ingamehttpclient_lib);
 	luaL_setfuncs(L, ingamehttpclient_lib, 0);
 	return 1;
