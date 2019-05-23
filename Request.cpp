@@ -95,6 +95,7 @@ static void performRequest(
 std::shared_ptr<Response> Request::start() const
 {
 	std::shared_ptr<Response> ptrResponse = std::make_shared<Response>();
+	ptrResponse->isPending = true;
 
 	std::thread requestThread = std::thread(performRequest, ptrResponse,
 		url, method, body, headers);
