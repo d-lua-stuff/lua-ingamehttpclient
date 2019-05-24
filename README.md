@@ -12,24 +12,7 @@ See [test.lua](./test.lua) for some examples.
 
 ## On Windows
 
-You may use different directories than described here, but then you will need to edit project settings.
-
-## Lua setup
-
-Compile Lua 5.3.x as described [here](https://blog.spreendigital.de/2015/01/16/how-to-compile-lua-5-3-0-for-windows/). Make sure that a 64-bit compiler is used. Place the sources in `C:\Lua53\src` and the compiled binaries in `C:\Lua53\bin`.
-
-## POCO setup
-In `C:\Dev` run:
-* `git clone --single-branch -b poco-1.9.0 https://github.com/pocoproject/poco.git` (the version on the official website is missing NetSSL_Win sources)
-* `cd poco`
-* `write components` and change it to:
-```
-Foundation
-Net
-NetSSL_Win
-```
-* `"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64` (assuming that VS2015 is installed, otherwise the path and the batch file name will be different)
-* `buildwin 140 build all both x64 nosamples`
+Run `build-lib.cmd` to build x64 [POCO](https://github.com/pocoproject/poco) and Lua 5.3.4. The `VS140COMNTOOLS` environment variable must be defined. Then build `ingamehttpclient.sln` in Visual Studio.
 
 ## On Linux or Mac
 

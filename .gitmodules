@@ -1,0 +1,8 @@
+[submodule "lib/poco"]
+	path = lib/poco
+	url = https://github.com/pocoproject/poco.git
+	branch = poco-1.9.0
+[submodule "lib/lua"]
+	path = lib/lua
+	url = https://github.com/lua/lua.git
+	ignore = untracked

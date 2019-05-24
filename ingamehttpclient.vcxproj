@@ -62,13 +62,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Lua53\src;C:\Dev\poco\Foundation\include;C:\Dev\poco\Net\include;C:\Dev\poco\NetSSL_Win\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Lua53\bin;C:\Dev\poco\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)lib\lua;$(SolutionDir)lib\poco\Foundation\include;$(SolutionDir)lib\poco\Net\include;$(SolutionDir)lib\poco\NetSSL_Win\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\lua;$(SolutionDir)lib\poco\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Lua53\src;C:\Dev\poco\Foundation\include;C:\Dev\poco\Net\include;C:\Dev\poco\NetSSL_Win\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Lua53\bin;C:\Dev\poco\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)lib\lua;$(SolutionDir)lib\poco\Foundation\include;$(SolutionDir)lib\poco\Net\include;$(SolutionDir)lib\poco\NetSSL_Win\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\lua;$(SolutionDir)lib\poco\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
